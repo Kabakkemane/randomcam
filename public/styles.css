@@ -51,19 +51,29 @@ select {
   min-height: calc(100vh - 40px);
 }
 
-.remote-wrap,
+.video-pane,
 .side,
-.local-card,
 .chat {
   border: 1px solid var(--line);
   background: var(--panel);
   border-radius: 8px;
 }
 
-.remote-wrap {
+.video-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 42%);
+  gap: 12px;
+  min-height: calc(100vh - 40px);
+}
+
+.video-pane {
   position: relative;
   overflow: hidden;
   min-height: 520px;
+}
+
+.local-card {
+  background: #050608;
 }
 
 .match-badge {
@@ -90,6 +100,19 @@ select {
 
 .match-badge small {
   color: var(--muted);
+}
+
+.video-label {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(16, 17, 20, 0.76);
+  color: var(--text);
+  font-weight: 700;
+  backdrop-filter: blur(10px);
 }
 
 video {
@@ -131,7 +154,7 @@ video {
 
 .side {
   display: grid;
-  grid-template-rows: auto auto 210px auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto minmax(0, 1fr);
   gap: 14px;
   padding: 14px;
   min-height: 0;
@@ -162,12 +185,6 @@ label {
   gap: 5px;
   color: var(--muted);
   font-size: 12px;
-}
-
-.local-card {
-  position: relative;
-  overflow: hidden;
-  background: #050608;
 }
 
 .icon-button {
@@ -309,13 +326,19 @@ select {
     min-height: 100dvh;
   }
 
-  .remote-wrap {
-    min-height: 42dvh;
-    max-height: 48dvh;
+  .video-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    min-height: 38dvh;
+  }
+
+  .video-pane {
+    min-height: 38dvh;
+    max-height: 44dvh;
   }
 
   .side {
-    grid-template-rows: auto auto 38dvh auto auto minmax(190px, 1fr);
+    grid-template-rows: auto auto auto auto minmax(190px, 1fr);
     gap: 10px;
     padding: 10px;
   }
@@ -336,10 +359,6 @@ select {
 
   .profile {
     grid-template-columns: minmax(0, 1fr) minmax(118px, 38%);
-  }
-
-  .local-card {
-    min-height: 0;
   }
 
   .controls {
@@ -389,13 +408,18 @@ select {
 }
 
 @media (max-width: 520px) {
-  .remote-wrap {
-    min-height: 36dvh;
-    max-height: 42dvh;
+  .video-grid {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .video-pane {
+    min-height: 28dvh;
+    max-height: 34dvh;
   }
 
   .side {
-    grid-template-rows: auto auto 150px auto auto minmax(180px, 1fr);
+    grid-template-rows: auto auto auto auto minmax(180px, 1fr);
   }
 
   .chat-form {

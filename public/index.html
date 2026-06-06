@@ -10,15 +10,26 @@
   <body>
     <main class="shell">
       <section class="stage" aria-label="Video sohbet">
-        <div class="remote-wrap">
-          <video id="remoteVideo" autoplay playsinline></video>
-          <div id="matchBadge" class="match-badge" hidden>
-            <span id="partnerName">Misafir</span>
-            <small id="partnerRegion">Farketmez</small>
+        <div class="video-grid">
+          <div class="remote-wrap video-pane">
+            <video id="remoteVideo" autoplay playsinline></video>
+            <div id="matchBadge" class="match-badge" hidden>
+              <span id="partnerName">Misafir</span>
+              <small id="partnerRegion">Farketmez</small>
+            </div>
+            <div id="emptyState" class="empty">
+              <span class="status-dot"></span>
+              <p id="statusText">Baslat'a basinca rastgele bir kisi aranir.</p>
+            </div>
           </div>
-          <div id="emptyState" class="empty">
-            <span class="status-dot"></span>
-            <p id="statusText">Baslat'a basinca rastgele bir kisi aranir.</p>
+
+          <div class="local-card video-pane">
+            <video id="localVideo" autoplay muted playsinline></video>
+            <span class="video-label">Ben</span>
+            <button id="muteBtn" class="icon-button" type="button" title="Mikrofonu kapat/ac">Mic</button>
+            <button id="cameraBtn" class="icon-button" type="button" title="Kamerayi kapat/ac">Cam</button>
+            <button id="mirrorBtn" class="icon-button wide" type="button" title="Goruntu yansimasini cevir">Ayna</button>
+            <button id="switchCameraBtn" class="icon-button wide" type="button" title="On/arka kamerayi degistir">Yon</button>
           </div>
         </div>
 
@@ -42,14 +53,6 @@
                 <option>Amerika</option>
               </select>
             </label>
-          </div>
-
-          <div class="local-card">
-            <video id="localVideo" autoplay muted playsinline></video>
-            <button id="muteBtn" class="icon-button" type="button" title="Mikrofonu kapat/ac">Mic</button>
-            <button id="cameraBtn" class="icon-button" type="button" title="Kamerayi kapat/ac">Cam</button>
-            <button id="mirrorBtn" class="icon-button wide" type="button" title="Goruntu yansimasini cevir">Ayna</button>
-            <button id="switchCameraBtn" class="icon-button wide" type="button" title="On/arka kamerayi degistir">Yon</button>
           </div>
 
           <div class="controls">
