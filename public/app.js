@@ -138,6 +138,13 @@ async function getCameraByFacingMode() {
   }
 }
 
+function findCameraByFacingLabel(videoInputs, targetFacingMode) {
+  const frontPattern = /front|user|face|ön|on/i;
+  const backPattern = /back|rear|environment|arka|wide/i;
+  const pattern = targetFacingMode === "user" ? frontPattern : backPattern;
+  return videoInputs.find((device) => pattern.test(device.label));
+}
+
 function stopMirroredTrack() {
   if (mirrorFrameId) {
     cancelAnimationFrame(mirrorFrameId);
@@ -196,6 +203,9 @@ async function updateOutgoingVideoTrack() {
 }
 
 async function switchPhysicalCamera() {
+  const previousFacingMode = cameraFacingMode;
+  const previousDeviceId = currentVideoDeviceId;
+
   try {
     if (!localStream) {
       setStatus("Kamera izni bekleniyor...");
@@ -210,23 +220,26 @@ async function switchPhysicalCamera() {
     cameraFacingMode = cameraFacingMode === "user" ? "environment" : "user";
 
     const videoInputs = await getVideoInputs();
+    const labeledCamera = findCameraByFacingLabel(videoInputs, cameraFacingMode);
     let nextStream;
 
-    if (videoInputs.length > 1 && currentVideoDeviceId) {
+    if (currentVideoTrack) {
+      localStream.removeTrack(currentVideoTrack);
+      currentVideoTrack.stop();
+    }
+
+    if (labeledCamera && labeledCamera.deviceId !== currentVideoDeviceId) {
+      nextStream = await getCameraByDeviceId(labeledCamera.deviceId);
+    } else if (videoInputs.length > 1 && currentVideoDeviceId) {
       const currentIndex = videoInputs.findIndex((device) => device.deviceId === currentVideoDeviceId);
-      const nextDevice = videoInputs[(currentIndex + 1 + videoInputs.length) % videoInputs.length] || videoInputs[0];
+      const safeIndex = currentIndex === -1 ? 0 : currentIndex;
+      const nextDevice = videoInputs[(safeIndex + 1) % videoInputs.length] || videoInputs[0];
       nextStream = await getCameraByDeviceId(nextDevice.deviceId);
     } else {
-      if (currentVideoTrack) currentVideoTrack.stop();
       nextStream = await getCameraByFacingMode();
     }
 
     const nextVideoTrack = nextStream.getVideoTracks()[0];
-
-    if (currentVideoTrack && currentVideoTrack.readyState !== "ended") {
-      currentVideoTrack.stop();
-    }
-    if (currentVideoTrack) localStream.removeTrack(currentVideoTrack);
 
     localStream.addTrack(nextVideoTrack);
     localVideo.srcObject = localStream;
@@ -235,7 +248,26 @@ async function switchPhysicalCamera() {
     await updateOutgoingVideoTrack();
     setStatus("Kamera yonu degistirildi.", !matched);
   } catch (error) {
-    cameraFacingMode = cameraFacingMode === "user" ? "environment" : "user";
+    cameraFacingMode = previousFacingMode;
+    try {
+      const fallbackStream = previousDeviceId
+        ? await getCameraByDeviceId(previousDeviceId)
+        : await getCameraByFacingMode();
+      const fallbackTrack = fallbackStream.getVideoTracks()[0];
+      const existingTrack = localStream?.getVideoTracks()[0];
+      if (existingTrack) {
+        localStream.removeTrack(existingTrack);
+        existingTrack.stop();
+      }
+      localStream.addTrack(fallbackTrack);
+      localVideo.srcObject = localStream;
+      currentVideoDeviceId = fallbackTrack.getSettings().deviceId || previousDeviceId || null;
+      stopMirroredTrack();
+      await updateOutgoingVideoTrack();
+    } catch (fallbackError) {
+      setStatus("Kamera yeniden acilamadi. Sayfayi yenileyip tekrar izin ver.");
+    }
+
     if (error.name === "OverconstrainedError" || error.name === "NotFoundError") {
       setStatus("Bu cihazda degistirilecek ikinci kamera bulunamadi.");
     } else if (error.name === "NotAllowedError") {
