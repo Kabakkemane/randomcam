@@ -13,7 +13,7 @@ const stopBtn = document.getElementById("stopBtn");
 const reportBtn = document.getElementById("reportBtn");
 const muteBtn = document.getElementById("muteBtn");
 const cameraBtn = document.getElementById("cameraBtn");
-const switchCameraBtn = document.getElementById("switchCameraBtn");
+const mirrorBtn = document.getElementById("mirrorBtn");
 const chatForm = document.getElementById("chatForm");
 const chatInput = document.getElementById("chatInput");
 const chatSend = chatForm.querySelector("button");
@@ -28,7 +28,6 @@ let events;
 let localStream;
 let peer;
 let matched = false;
-let cameraFacingMode = "user";
 
 function setStatus(text, showEmpty = true) {
   statusText.textContent = text;
@@ -80,56 +79,14 @@ async function ensureMedia() {
   if (localStream) return localStream;
 
   localStream = await navigator.mediaDevices.getUserMedia({
-    video: { facingMode: { ideal: cameraFacingMode } },
+    video: true,
     audio: true
   });
   localVideo.srcObject = localStream;
   return localStream;
 }
 
-async function switchCamera() {
-  cameraFacingMode = cameraFacingMode === "user" ? "environment" : "user";
-
-  try {
-    if (!localStream) {
-      setStatus("Kamera izni bekleniyor...");
-      await ensureMedia();
-      setStatus("Kamera hazir. Baslat'a basinca eslesme aranir.");
-      return;
-    }
-
-    const nextStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: cameraFacingMode } },
-      audio: false
-    });
-    const nextVideoTrack = nextStream.getVideoTracks()[0];
-    const currentVideoTrack = localStream.getVideoTracks()[0];
-
-    if (currentVideoTrack) {
-      currentVideoTrack.stop();
-      localStream.removeTrack(currentVideoTrack);
-    }
-
-    localStream.addTrack(nextVideoTrack);
-    localVideo.srcObject = localStream;
-
-    if (peer) {
-      const videoSender = peer.getSenders().find((sender) => sender.track?.kind === "video");
-      if (videoSender) await videoSender.replaceTrack(nextVideoTrack);
-    }
-  } catch (error) {
-    cameraFacingMode = cameraFacingMode === "user" ? "environment" : "user";
-    if (error.name === "OverconstrainedError" || error.name === "NotFoundError") {
-      setStatus("Bu cihazda degistirilecek ikinci kamera bulunamadi.");
-    } else if (error.name === "NotAllowedError") {
-      setStatus("Kamera izni gerekli. Adres cubugundaki kilitten izin ver.");
-    } else {
-      setStatus(`Kamera degistirilemedi: ${error.name || "Bilinmeyen hata"}`);
-    }
-  }
-}
-
-function resetPeer() {
+function closePeer() {
   if (peer) {
     peer.ontrack = null;
     peer.onicecandidate = null;
@@ -137,13 +94,17 @@ function resetPeer() {
     peer.close();
   }
   peer = null;
-  matched = false;
   remoteVideo.srcObject = null;
+}
+
+function resetPeer() {
+  closePeer();
+  matched = false;
   matchBadge.hidden = true;
 }
 
 function createPeer() {
-  resetPeer();
+  closePeer();
   peer = new RTCPeerConnection(rtcConfig);
 
   localStream.getTracks().forEach((track) => {
@@ -314,7 +275,10 @@ cameraBtn.addEventListener("click", () => {
   cameraBtn.textContent = video.enabled ? "Cam" : "Off";
 });
 
-switchCameraBtn.addEventListener("click", switchCamera);
+mirrorBtn.addEventListener("click", () => {
+  localVideo.classList.toggle("mirrored");
+  mirrorBtn.textContent = localVideo.classList.contains("mirrored") ? "Ayna" : "Duz";
+});
 
 chatForm.addEventListener("submit", (event) => {
   event.preventDefault();

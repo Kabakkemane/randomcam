@@ -89,6 +89,10 @@ video {
   object-fit: cover;
 }
 
+#localVideo.mirrored {
+  transform: scaleX(-1);
+}
+
 .empty {
   position: absolute;
   inset: 0;
@@ -177,7 +181,7 @@ label {
   left: 72px;
 }
 
-#switchCameraBtn {
+#mirrorBtn {
   left: 134px;
 }
 
