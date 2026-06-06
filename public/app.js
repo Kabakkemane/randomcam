@@ -28,6 +28,11 @@ let events;
 let localStream;
 let peer;
 let matched = false;
+let mirrorEnabled = false;
+let mirroredVideoTrack;
+let mirrorCanvas;
+let mirrorContext;
+let mirrorFrameId;
 
 function setStatus(text, showEmpty = true) {
   statusText.textContent = text;
@@ -86,6 +91,63 @@ async function ensureMedia() {
   return localStream;
 }
 
+function stopMirroredTrack() {
+  if (mirrorFrameId) {
+    cancelAnimationFrame(mirrorFrameId);
+    mirrorFrameId = null;
+  }
+
+  if (mirroredVideoTrack) {
+    mirroredVideoTrack.stop();
+    mirroredVideoTrack = null;
+  }
+}
+
+function createMirroredVideoTrack() {
+  const sourceTrack = localStream?.getVideoTracks()[0];
+  if (!sourceTrack) return null;
+
+  stopMirroredTrack();
+
+  const settings = sourceTrack.getSettings();
+  mirrorCanvas = mirrorCanvas || document.createElement("canvas");
+  mirrorCanvas.width = settings.width || localVideo.videoWidth || 640;
+  mirrorCanvas.height = settings.height || localVideo.videoHeight || 480;
+  mirrorContext = mirrorCanvas.getContext("2d");
+
+  const draw = () => {
+    if (!mirrorEnabled || !localStream) return;
+    if (localVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      mirrorContext.save();
+      mirrorContext.translate(mirrorCanvas.width, 0);
+      mirrorContext.scale(-1, 1);
+      mirrorContext.drawImage(localVideo, 0, 0, mirrorCanvas.width, mirrorCanvas.height);
+      mirrorContext.restore();
+    }
+    mirrorFrameId = requestAnimationFrame(draw);
+  };
+
+  draw();
+  mirroredVideoTrack = mirrorCanvas.captureStream(30).getVideoTracks()[0];
+  return mirroredVideoTrack;
+}
+
+function outgoingVideoTrack() {
+  if (!mirrorEnabled) {
+    return localStream?.getVideoTracks()[0] || null;
+  }
+
+  return mirroredVideoTrack || createMirroredVideoTrack();
+}
+
+async function updateOutgoingVideoTrack() {
+  if (!peer) return;
+  const sender = peer.getSenders().find((item) => item.track?.kind === "video");
+  const nextTrack = outgoingVideoTrack();
+  if (sender && nextTrack) await sender.replaceTrack(nextTrack);
+  if (!mirrorEnabled) stopMirroredTrack();
+}
+
 function closePeer() {
   if (peer) {
     peer.ontrack = null;
@@ -95,6 +157,7 @@ function closePeer() {
   }
   peer = null;
   remoteVideo.srcObject = null;
+  stopMirroredTrack();
 }
 
 function resetPeer() {
@@ -107,9 +170,12 @@ function createPeer() {
   closePeer();
   peer = new RTCPeerConnection(rtcConfig);
 
-  localStream.getTracks().forEach((track) => {
+  localStream.getAudioTracks().forEach((track) => {
     peer.addTrack(track, localStream);
   });
+
+  const videoTrack = outgoingVideoTrack();
+  if (videoTrack) peer.addTrack(videoTrack, localStream);
 
   peer.ontrack = (event) => {
     remoteVideo.srcObject = event.streams[0];
@@ -275,9 +341,11 @@ cameraBtn.addEventListener("click", () => {
   cameraBtn.textContent = video.enabled ? "Cam" : "Off";
 });
 
-mirrorBtn.addEventListener("click", () => {
+mirrorBtn.addEventListener("click", async () => {
   localVideo.classList.toggle("mirrored");
-  mirrorBtn.textContent = localVideo.classList.contains("mirrored") ? "Ayna" : "Duz";
+  mirrorEnabled = localVideo.classList.contains("mirrored");
+  mirrorBtn.textContent = mirrorEnabled ? "Duz" : "Ayna";
+  await updateOutgoingVideoTrack();
 });
 
 chatForm.addEventListener("submit", (event) => {
