@@ -36,7 +36,7 @@ function iceServers() {
 }
 
 function emit(id, type, data = {}) {
-  const client = clients.get(id);
+  const client = clients.get(id)?.res;
   if (!client) return;
   client.write(`event: ${type}\n`);
   client.write(`data: ${JSON.stringify(data)}\n\n`);
@@ -182,9 +182,15 @@ const server = http.createServer((req, res) => {
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive"
     });
-    clients.set(id, res);
+    const heartbeat = setInterval(() => {
+      res.write(`event: ping\n`);
+      res.write(`data: ${Date.now()}\n\n`);
+    }, 15000);
+    clients.set(id, { res, heartbeat });
     emit(id, "ready", { id });
     req.on("close", () => {
+      const client = clients.get(id);
+      if (client) clearInterval(client.heartbeat);
       clients.delete(id);
       profiles.delete(id);
       endMatch(id);

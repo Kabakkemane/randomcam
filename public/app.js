@@ -36,6 +36,7 @@ let mirrorCanvas;
 let mirrorContext;
 let mirrorFrameId;
 let cameraFacingMode = "environment";
+let disconnectTimer;
 
 function setStatus(text, showEmpty = true) {
   statusText.textContent = text;
@@ -59,6 +60,13 @@ function setPartner(profile) {
   partnerName.textContent = profile?.name || "Misafir";
   partnerRegion.textContent = profile?.region || "Farketmez";
   matchBadge.hidden = false;
+}
+
+function clearDisconnectTimer() {
+  if (disconnectTimer) {
+    clearTimeout(disconnectTimer);
+    disconnectTimer = null;
+  }
 }
 
 async function send(action, payload = {}) {
@@ -199,6 +207,7 @@ async function switchPhysicalCamera() {
 }
 
 function closePeer() {
+  clearDisconnectTimer();
   if (peer) {
     peer.ontrack = null;
     peer.onicecandidate = null;
@@ -245,7 +254,25 @@ function createPeer() {
   };
 
   peer.onconnectionstatechange = () => {
-    if (["failed", "disconnected", "closed"].includes(peer.connectionState)) {
+    if (peer.connectionState === "connected") {
+      clearDisconnectTimer();
+      setStatus("Baglandi", false);
+      setControls("connected");
+      return;
+    }
+
+    if (peer.connectionState === "disconnected") {
+      clearDisconnectTimer();
+      setStatus("Baglanti zayifladi, yeniden baglanmaya calisiliyor...");
+      disconnectTimer = setTimeout(() => {
+        setStatus("Baglanti koptu. Sonraki ile tekrar dene.");
+        setControls("idle");
+      }, 12000);
+      return;
+    }
+
+    if (["failed", "closed"].includes(peer.connectionState)) {
+      clearDisconnectTimer();
       setStatus("Baglanti koptu. Sonraki ile tekrar dene.");
       setControls("idle");
     }
@@ -350,9 +377,13 @@ function connectEvents() {
     addMessage(message, "partner");
   });
 
+  onEvent("ping", () => {});
+
   events.onerror = () => {
-    setStatus("Sunucu baglantisi bekleniyor...");
-    setControls("idle");
+    if (!matched) {
+      setStatus("Sunucu baglantisi bekleniyor...");
+      setControls("idle");
+    }
   };
 }
 
