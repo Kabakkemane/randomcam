@@ -26,6 +26,7 @@ let rtcConfig = {
 let clientId;
 let events;
 let localStream;
+let remoteStream;
 let peer;
 let matched = false;
 let mirrorEnabled = false;
@@ -85,9 +86,16 @@ async function ensureMedia() {
 
   localStream = await navigator.mediaDevices.getUserMedia({
     video: true,
-    audio: true
+    audio: {
+      echoCancellation: true,
+      noiseSuppression: true,
+      autoGainControl: true
+    }
   });
   localVideo.srcObject = localStream;
+  if (localStream.getAudioTracks().length === 0) {
+    setStatus("Mikrofon bulunamadi veya izin verilmedi.");
+  }
   return localStream;
 }
 
@@ -156,6 +164,7 @@ function closePeer() {
     peer.close();
   }
   peer = null;
+  remoteStream = null;
   remoteVideo.srcObject = null;
   stopMirroredTrack();
 }
@@ -169,6 +178,10 @@ function resetPeer() {
 function createPeer() {
   closePeer();
   peer = new RTCPeerConnection(rtcConfig);
+  remoteStream = new MediaStream();
+  remoteVideo.srcObject = remoteStream;
+  remoteVideo.muted = false;
+  remoteVideo.volume = 1;
 
   localStream.getAudioTracks().forEach((track) => {
     peer.addTrack(track, localStream);
@@ -178,7 +191,10 @@ function createPeer() {
   if (videoTrack) peer.addTrack(videoTrack, localStream);
 
   peer.ontrack = (event) => {
-    remoteVideo.srcObject = event.streams[0];
+    remoteStream.addTrack(event.track);
+    remoteVideo.play().catch(() => {
+      setStatus("Ses icin sayfaya bir kez tikla veya Baslat'a tekrar bas.");
+    });
     setStatus("Baglandi", false);
   };
 
