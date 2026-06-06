@@ -36,6 +36,7 @@ let mirrorCanvas;
 let mirrorContext;
 let mirrorFrameId;
 let cameraFacingMode = "environment";
+let currentVideoDeviceId;
 let disconnectTimer;
 
 function setStatus(text, showEmpty = true) {
@@ -104,10 +105,37 @@ async function ensureMedia() {
     }
   });
   localVideo.srcObject = localStream;
+  currentVideoDeviceId = localStream.getVideoTracks()[0]?.getSettings().deviceId || null;
   if (localStream.getAudioTracks().length === 0) {
     setStatus("Mikrofon bulunamadi veya izin verilmedi.");
   }
   return localStream;
+}
+
+async function getVideoInputs() {
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  return devices.filter((device) => device.kind === "videoinput");
+}
+
+async function getCameraByDeviceId(deviceId) {
+  return navigator.mediaDevices.getUserMedia({
+    video: { deviceId: { exact: deviceId } },
+    audio: false
+  });
+}
+
+async function getCameraByFacingMode() {
+  try {
+    return await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { exact: cameraFacingMode } },
+      audio: false
+    });
+  } catch (error) {
+    return navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: cameraFacingMode } },
+      audio: false
+    });
+  }
 }
 
 function stopMirroredTrack() {
@@ -168,8 +196,6 @@ async function updateOutgoingVideoTrack() {
 }
 
 async function switchPhysicalCamera() {
-  cameraFacingMode = cameraFacingMode === "user" ? "environment" : "user";
-
   try {
     if (!localStream) {
       setStatus("Kamera izni bekleniyor...");
@@ -178,22 +204,36 @@ async function switchPhysicalCamera() {
       return;
     }
 
-    const nextStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: cameraFacingMode } },
-      audio: false
-    });
-    const nextVideoTrack = nextStream.getVideoTracks()[0];
     const currentVideoTrack = localStream.getVideoTracks()[0];
+    const currentSettings = currentVideoTrack?.getSettings() || {};
+    currentVideoDeviceId = currentSettings.deviceId || currentVideoDeviceId;
+    cameraFacingMode = cameraFacingMode === "user" ? "environment" : "user";
 
-    if (currentVideoTrack) {
-      currentVideoTrack.stop();
-      localStream.removeTrack(currentVideoTrack);
+    const videoInputs = await getVideoInputs();
+    let nextStream;
+
+    if (videoInputs.length > 1 && currentVideoDeviceId) {
+      const currentIndex = videoInputs.findIndex((device) => device.deviceId === currentVideoDeviceId);
+      const nextDevice = videoInputs[(currentIndex + 1 + videoInputs.length) % videoInputs.length] || videoInputs[0];
+      nextStream = await getCameraByDeviceId(nextDevice.deviceId);
+    } else {
+      if (currentVideoTrack) currentVideoTrack.stop();
+      nextStream = await getCameraByFacingMode();
     }
+
+    const nextVideoTrack = nextStream.getVideoTracks()[0];
+
+    if (currentVideoTrack && currentVideoTrack.readyState !== "ended") {
+      currentVideoTrack.stop();
+    }
+    if (currentVideoTrack) localStream.removeTrack(currentVideoTrack);
 
     localStream.addTrack(nextVideoTrack);
     localVideo.srcObject = localStream;
+    currentVideoDeviceId = nextVideoTrack.getSettings().deviceId || null;
     stopMirroredTrack();
     await updateOutgoingVideoTrack();
+    setStatus("Kamera yonu degistirildi.", !matched);
   } catch (error) {
     cameraFacingMode = cameraFacingMode === "user" ? "environment" : "user";
     if (error.name === "OverconstrainedError" || error.name === "NotFoundError") {
