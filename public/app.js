@@ -83,9 +83,10 @@ async function loadConfig() {
 
 async function ensureMedia() {
   if (localStream) return localStream;
+  const isMobile = window.matchMedia("(max-width: 860px)").matches;
 
   localStream = await navigator.mediaDevices.getUserMedia({
-    video: true,
+    video: isMobile ? { facingMode: { ideal: "environment" } } : true,
     audio: {
       echoCancellation: true,
       noiseSuppression: true,
