@@ -165,12 +165,20 @@ label {
   color: var(--text);
 }
 
+.icon-button.wide {
+  width: 62px;
+}
+
 #muteBtn {
   left: 10px;
 }
 
 #cameraBtn {
   left: 72px;
+}
+
+#switchCameraBtn {
+  left: 134px;
 }
 
 .controls {
@@ -211,7 +219,8 @@ button.danger {
 }
 
 button:disabled,
-input:disabled {
+input:disabled,
+select:disabled {
   cursor: not-allowed;
   opacity: 0.48;
 }
