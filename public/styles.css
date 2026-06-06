@@ -63,13 +63,15 @@ select {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 42%);
   gap: 12px;
-  min-height: calc(100vh - 40px);
+  height: clamp(360px, 58dvh, 620px);
+  min-height: 0;
 }
 
 .video-pane {
   position: relative;
   overflow: hidden;
-  min-height: 520px;
+  min-height: 0;
+  height: 100%;
 }
 
 .local-card {
@@ -329,12 +331,13 @@ select {
   .video-grid {
     grid-template-columns: 1fr 1fr;
     gap: 8px;
-    min-height: 38dvh;
+    height: clamp(240px, 40dvh, 360px);
+    min-height: 0;
   }
 
   .video-pane {
-    min-height: 38dvh;
-    max-height: 44dvh;
+    min-height: 0;
+    max-height: none;
   }
 
   .side {
@@ -410,12 +413,14 @@ select {
 @media (max-width: 520px) {
   .video-grid {
     grid-template-columns: 1fr;
-    min-height: auto;
+    height: auto;
+    min-height: 0;
   }
 
   .video-pane {
-    min-height: 28dvh;
-    max-height: 34dvh;
+    height: clamp(190px, 28dvh, 260px);
+    min-height: 0;
+    max-height: none;
   }
 
   .side {
