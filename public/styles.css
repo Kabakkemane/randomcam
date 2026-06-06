@@ -1,0 +1,285 @@
+:root {
+  color-scheme: dark;
+  --bg: #101114;
+  --panel: #1c1e24;
+  --panel-2: #252832;
+  --text: #f4f6fb;
+  --muted: #aeb6c5;
+  --line: #393d49;
+  --accent: #24c48e;
+  --danger: #ff5c70;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.shell {
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 16px;
+  min-height: calc(100vh - 40px);
+}
+
+.remote-wrap,
+.side,
+.local-card,
+.chat {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 8px;
+}
+
+.remote-wrap {
+  position: relative;
+  overflow: hidden;
+  min-height: 520px;
+}
+
+.match-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: grid;
+  gap: 2px;
+  min-width: 160px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(16, 17, 20, 0.76);
+  backdrop-filter: blur(10px);
+}
+
+.match-badge[hidden] {
+  display: none;
+}
+
+.match-badge span {
+  font-weight: 700;
+}
+
+.match-badge small {
+  color: var(--muted);
+}
+
+video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #06070a;
+  object-fit: cover;
+}
+
+.empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 14px;
+  padding: 24px;
+  text-align: center;
+  color: var(--muted);
+  background: radial-gradient(circle at 50% 42%, #232630 0, #111217 58%);
+}
+
+.empty.hidden {
+  display: none;
+}
+
+.status-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 10px rgba(36, 196, 142, 0.14);
+}
+
+.side {
+  display: grid;
+  grid-template-rows: auto auto 210px auto auto minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px;
+  min-height: 0;
+}
+
+.brand {
+  display: grid;
+  gap: 3px;
+}
+
+.brand strong {
+  font-size: 22px;
+}
+
+.brand span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.profile {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 128px;
+  gap: 8px;
+}
+
+label {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.local-card {
+  position: relative;
+  overflow: hidden;
+  background: #050608;
+}
+
+.icon-button {
+  position: absolute;
+  bottom: 10px;
+  width: 54px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(16, 17, 20, 0.76);
+  color: var(--text);
+}
+
+#muteBtn {
+  left: 10px;
+}
+
+#cameraBtn {
+  left: 72px;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+button {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+}
+
+button.primary {
+  border-color: transparent;
+  background: var(--accent);
+  color: #07120f;
+  font-weight: 700;
+}
+
+button.danger {
+  border-color: rgba(255, 92, 112, 0.48);
+  background: rgba(255, 92, 112, 0.12);
+  color: #ffd4da;
+}
+
+.safety {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+button:disabled,
+input:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.chat {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: auto;
+  padding: 12px;
+}
+
+.message {
+  width: fit-content;
+  max-width: 88%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.message.me {
+  align-self: flex-end;
+  background: #23483c;
+}
+
+.chat-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid var(--line);
+}
+
+input,
+select {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #12141a;
+  color: var(--text);
+  padding: 0 12px;
+  min-height: 42px;
+}
+
+@media (max-width: 860px) {
+  .shell {
+    padding: 10px;
+  }
+
+  .stage {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .remote-wrap {
+    min-height: 48vh;
+  }
+
+  .side {
+    grid-template-rows: auto auto 180px auto auto 260px;
+  }
+}

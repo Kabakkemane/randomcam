@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rastgele Video Sohbet</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="stage" aria-label="Video sohbet">
+        <div class="remote-wrap">
+          <video id="remoteVideo" autoplay playsinline></video>
+          <div id="matchBadge" class="match-badge" hidden>
+            <span id="partnerName">Misafir</span>
+            <small id="partnerRegion">Farketmez</small>
+          </div>
+          <div id="emptyState" class="empty">
+            <span class="status-dot"></span>
+            <p id="statusText">Baslat'a basinca rastgele bir kisi aranir.</p>
+          </div>
+        </div>
+
+        <aside class="side">
+          <div class="brand">
+            <strong>RandomCam</strong>
+            <span>Rastgele video sohbet</span>
+          </div>
+
+          <div class="profile">
+            <label>
+              Ad
+              <input id="nameInput" type="text" maxlength="28" placeholder="Misafir" />
+            </label>
+            <label>
+              Tercih
+              <select id="regionSelect">
+                <option>Farketmez</option>
+                <option>Turkiye</option>
+                <option>Avrupa</option>
+                <option>Amerika</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="local-card">
+            <video id="localVideo" autoplay muted playsinline></video>
+            <button id="muteBtn" class="icon-button" type="button" title="Mikrofonu kapat/ac">Mic</button>
+            <button id="cameraBtn" class="icon-button" type="button" title="Kamerayi kapat/ac">Cam</button>
+          </div>
+
+          <div class="controls">
+            <button id="startBtn" class="primary" type="button">Baslat</button>
+            <button id="nextBtn" type="button" disabled>Sonraki</button>
+            <button id="stopBtn" type="button" disabled>Bitir</button>
+          </div>
+
+          <div class="safety">
+            <button id="reportBtn" class="danger" type="button" disabled>Raporla</button>
+            <span id="safetyText">Kotu davranista sohbeti kapatabilirsin.</span>
+          </div>
+
+          <div class="chat">
+            <div id="messages" class="messages" aria-live="polite"></div>
+            <form id="chatForm" class="chat-form">
+              <input id="chatInput" type="text" autocomplete="off" maxlength="240" placeholder="Mesaj yaz" disabled />
+              <button type="submit" disabled>Gonder</button>
+            </form>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
