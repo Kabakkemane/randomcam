@@ -87,10 +87,11 @@ function tryMatch(id) {
 
 function serveStatic(req, res) {
   const url = new URL(req.url, `http://${req.headers.host}`);
-  const rawPath = url.pathname === "/" ? "/index.html" : url.pathname;
-  const filePath = path.normalize(path.join(publicDir, rawPath));
+  const rawPath = url.pathname === "/" ? "index.html" : decodeURIComponent(url.pathname.slice(1));
+  const filePath = path.resolve(publicDir, rawPath);
+  const relativePath = path.relative(publicDir, filePath);
 
-  if (!filePath.startsWith(publicDir)) {
+  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
     res.writeHead(403);
     res.end("Forbidden");
     return;
