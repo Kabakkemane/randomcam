@@ -14,6 +14,7 @@ const reportBtn = document.getElementById("reportBtn");
 const muteBtn = document.getElementById("muteBtn");
 const cameraBtn = document.getElementById("cameraBtn");
 const mirrorBtn = document.getElementById("mirrorBtn");
+const switchCameraBtn = document.getElementById("switchCameraBtn");
 const chatForm = document.getElementById("chatForm");
 const chatInput = document.getElementById("chatInput");
 const chatSend = chatForm.querySelector("button");
@@ -34,6 +35,7 @@ let mirroredVideoTrack;
 let mirrorCanvas;
 let mirrorContext;
 let mirrorFrameId;
+let cameraFacingMode = "environment";
 
 function setStatus(text, showEmpty = true) {
   statusText.textContent = text;
@@ -86,7 +88,7 @@ async function ensureMedia() {
   const isMobile = window.matchMedia("(max-width: 860px)").matches;
 
   localStream = await navigator.mediaDevices.getUserMedia({
-    video: isMobile ? { facingMode: { ideal: "environment" } } : true,
+    video: isMobile ? { facingMode: { ideal: cameraFacingMode } } : true,
     audio: {
       echoCancellation: true,
       noiseSuppression: true,
@@ -155,6 +157,45 @@ async function updateOutgoingVideoTrack() {
   const nextTrack = outgoingVideoTrack();
   if (sender && nextTrack) await sender.replaceTrack(nextTrack);
   if (!mirrorEnabled) stopMirroredTrack();
+}
+
+async function switchPhysicalCamera() {
+  cameraFacingMode = cameraFacingMode === "user" ? "environment" : "user";
+
+  try {
+    if (!localStream) {
+      setStatus("Kamera izni bekleniyor...");
+      await ensureMedia();
+      setStatus("Kamera hazir. Baslat'a basinca eslesme aranir.");
+      return;
+    }
+
+    const nextStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: cameraFacingMode } },
+      audio: false
+    });
+    const nextVideoTrack = nextStream.getVideoTracks()[0];
+    const currentVideoTrack = localStream.getVideoTracks()[0];
+
+    if (currentVideoTrack) {
+      currentVideoTrack.stop();
+      localStream.removeTrack(currentVideoTrack);
+    }
+
+    localStream.addTrack(nextVideoTrack);
+    localVideo.srcObject = localStream;
+    stopMirroredTrack();
+    await updateOutgoingVideoTrack();
+  } catch (error) {
+    cameraFacingMode = cameraFacingMode === "user" ? "environment" : "user";
+    if (error.name === "OverconstrainedError" || error.name === "NotFoundError") {
+      setStatus("Bu cihazda degistirilecek ikinci kamera bulunamadi.");
+    } else if (error.name === "NotAllowedError") {
+      setStatus("Kamera izni gerekli. Adres cubugundaki kilitten izin ver.");
+    } else {
+      setStatus(`Kamera degistirilemedi: ${error.name || "Bilinmeyen hata"}`);
+    }
+  }
 }
 
 function closePeer() {
@@ -364,6 +405,8 @@ mirrorBtn.addEventListener("click", async () => {
   mirrorBtn.textContent = mirrorEnabled ? "Duz" : "Ayna";
   await updateOutgoingVideoTrack();
 });
+
+switchCameraBtn.addEventListener("click", switchPhysicalCamera);
 
 chatForm.addEventListener("submit", (event) => {
   event.preventDefault();
